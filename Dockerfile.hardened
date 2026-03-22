@@ -1,0 +1,24 @@
+# 1. Använd en mindre och mer up-to-date bas-image
+FROM python:3.12-slim-bookworm
+
+# 2. Skapa en icke-root användare för att begränsa rättigheter
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+
+WORKDIR /app
+
+# 3. Installera dependencies (utan cache för att hålla nere storleken)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 4. Kopiera kod och sätt rätt ägare direkt
+COPY --chown=appuser:appgroup app.py .
+
+# 5. Byt till den säkra användaren
+USER appuser
+
+# 6. Dokumentera port och lägg till Healthcheck
+EXPOSE 5000
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/')" || exit 1
+
+CMD ["python", "app.py"]

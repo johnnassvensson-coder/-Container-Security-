@@ -1,0 +1,6 @@
+FROM python:3.8
+# Gammal version av Flask med kända sårbarheter
+RUN pip install flask==1.0.0
+COPY app.py /app.py
+# Körs som root som standard
+CMD ["python", "/app.py"]
