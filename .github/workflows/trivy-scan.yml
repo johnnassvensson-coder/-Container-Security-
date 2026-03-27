@@ -1,0 +1,46 @@
+name: Trivy Container Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 1. Bygg den sårbara imagen
+      - name: Build vulnerable image
+        run: docker build -t my-app:vulnerable -f Dockerfile.vulnerable .
+
+      # 2. Skanna den sårbara imagen och spara till fil
+      - name: Scan vulnerable image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'my-app:vulnerable'
+          format: 'table'
+          output: 'scan-before.txt'
+
+      # 3. Bygg den härdade imagen
+      - name: Build hardened image
+        run: docker build -t my-app:hardened -f Dockerfile.hardened .
+
+      # 4. Skanna den härdade imagen och spara till fil
+      - name: Scan hardened image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'my-app:hardened'
+          format: 'table'
+          output: 'scan-after.txt'
+
+      # 5. Ladda upp resultaten 
+      - name: Upload scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-reports
+          path: |
+            scan-before.txt
+            scan-after.txt
