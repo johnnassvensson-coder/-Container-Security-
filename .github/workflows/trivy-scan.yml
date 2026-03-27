@@ -11,32 +11,36 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Hämtar hela historiken för att undvika git-fel
 
       # 1. Bygg den sårbara imagen
       - name: Build vulnerable image
         run: docker build -t my-app:vulnerable -f Dockerfile.vulnerable .
 
-      # 2. Skanna den sårbara imagen och spara till fil
+      # 2. Skanna den sårbara imagen
       - name: Scan vulnerable image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'my-app:vulnerable'
           format: 'table'
           output: 'scan-before.txt'
+          exit-code: '0' # Fortsätt även om sårbarheter hittas (viktigt för labben!)
 
       # 3. Bygg den härdade imagen
       - name: Build hardened image
         run: docker build -t my-app:hardened -f Dockerfile.hardened .
 
-      # 4. Skanna den härdade imagen och spara till fil
+      # 4. Skanna den härdade imagen
       - name: Scan hardened image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'my-app:hardened'
           format: 'table'
           output: 'scan-after.txt'
+          exit-code: '0'
 
-      # 5. Ladda upp resultaten 
+      # 5. Ladda upp resultaten
       - name: Upload scan results
         uses: actions/upload-artifact@v4
         with:
